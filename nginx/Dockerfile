@@ -1,4 +1,4 @@
-FROM tutum/nginx
+FROM nginx
 
 RUN rm /etc/nginx/sites-enabled/default
 

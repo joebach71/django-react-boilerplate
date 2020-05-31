@@ -5,7 +5,8 @@ RUN python -m pip install --upgrade pip
 RUN mkdir /srv/server
 WORKDIR /srv/server
 
-COPY ./server/requirements.txt requirements.txt
+COPY requirements.txt /srv/server/requirements.txt
+
 RUN python -m pip install -r requirements.txt
 
-COPY ./server/src .
+COPY ./src .

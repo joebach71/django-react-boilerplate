@@ -3,21 +3,40 @@ version: '3'
 services:
   web:
     restart: always
-    build: ./server
+    build: ./web
     image: jewelry-store:latest
     expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    links:
+      - app
+    volumes:
+      - web-react:/app/web
+    environment:
+      - DEBUG=true
+    command: npm start
+
+  app:
+    restart: always
+    build: ./server
+    image: jewelry-app:latest
+    expose:
       - "8000"
+    ports:
+      - "8000:8000"
     links:
       - postgres:postgres
       - redis:redis
     volumes:
-      - web-django:/srv/src/
-      - web-static:/src/src/static
+      - ./server/src/:/srv/server/
+      - django-src:/src/server/src/
+      - django-static:/srv/server/src/static
     env_file: .env
     environment:
       - DEBUG=true
       - POSTGRES_PASSWORD=postgres
-    command: /usr/local/bin/gunicorn docker_django.wsgi:application -w 2 -b :8000
+    command: /usr/local/bin/gunicorn server.wsgi:application -w 2 -b 0.0.0.0:8000
 
   nginx:
     restart: always
@@ -25,17 +44,20 @@ services:
     ports:
       - "80:80"
     volumes:
-      - web-static:/www/static
+      - django-static:/www/static
     links:
       - web:web
+      - app:app
 
   postgres:
     restart: always
     image: postgres:latest
     ports:
       - "5432:5432"
-    environment: 
-      - POSTGRES_PASSWORD=postgres      
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - pgdata:/var/lib/postgresql/data/
 
@@ -49,7 +71,6 @@ services:
 
   elasticsearch:
     image: elasticsearch:7.7.0
-    container_name: es01
     environment:
       - discovery.type=single-node
       - bootstrap.check=false
@@ -64,8 +85,9 @@ services:
       - 9200:9200
 
 volumes:
-  web-django:
-  web-static:
+  web-react:
+  django-src:
+  django-static:
   pgdata:
   redisdata:
   esdata:
